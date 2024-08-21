@@ -1,0 +1,119 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="file"], button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .chat-output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Upload PDF and Chat with the Bot</h2>
+        <form id="upload-form">
+            <div class="form-group">
+                <label for="username">Enter your username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="file">Upload PDF file:</label>
+                <input type="file" id="file" name="file" accept=".pdf" required>
+            </div>
+            <div class="form-group">
+                <button type="submit">Upload and Process</button>
+            </div>
+        </form>
+
+        <div id="chat-section" style="display:none;">
+            <h3>Ask the Bot</h3>
+            <form id="chat-form">
+                <div class="form-group">
+                    <input type="text" id="user_input" name="user_input" placeholder="Ask something..." required>
+                </div>
+                <div class="form-group">
+                    <button type="submit">Send</button>
+                </div>
+            </form>
+            <div class="chat-output" id="chat-output"></div>
+        </div>
+    </div>
+
+    <script>
+        const uploadForm = document.getElementById('upload-form');
+        const chatSection = document.getElementById('chat-section');
+        const chatForm = document.getElementById('chat-form');
+        const chatOutput = document.getElementById('chat-output');
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(uploadForm);
+            const response = await fetch('/upload_pdf/', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            alert(result.message);
+            chatSection.style.display = 'block';
+        });
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(chatForm);
+            const response = await fetch('/chat/', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            chatOutput.innerText = `Bot: ${result.response}`;
+        });
+    </script>
+</body>
+</html>

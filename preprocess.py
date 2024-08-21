@@ -1,5 +1,6 @@
 import re
 import os
+import shutil
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
@@ -26,16 +27,21 @@ def remove_url_from_str(input_text):
     text_without_url=url_pattren.sub(" ",input_text)
     return text_without_url
 
-def write_in_text_file(list_paragraph):
-    if os.path.exists("./pdf_test.txt"):
-        with open("./pdf_test.txt", 'w') as file:
-            pass
+def write_in_text_file(paragraphs, filename="./pdf_test.txt"):
+    with open(filename, 'w', encoding='utf-8') as f:
+        for s_para in paragraphs:
+            f.write(s_para + "\n")
+
+# def write_in_text_file(list_paragraph):
+#     if os.path.exists("./pdf_test.txt"):
+#         with open("./pdf_test.txt", 'w') as file:
+#             pass
         
-    for s_para in list_paragraph:
-        with open('./pdf_test.txt', 'a') as f:
-            f.write(s_para)
-            f.write('\n')
-            f.close()
+#     for s_para in list_paragraph:
+#         with open('./pdf_test.txt', 'a') as f:
+#             f.write(s_para)
+#             f.write('\n')
+#             f.close()
     
 def load_embedding_model():
     model_name="BAAI/bge-small-en-v1.5"
@@ -47,19 +53,44 @@ def load_embedding_model():
     return hf_embedding_model
     
 
+# def save_in_vectordb(file_path):
+#     langchain_loader=TextLoader(file_path)
+#     print("***********  Converting Text into Embedding *************")
+#     text_splitter = RecursiveCharacterTextSplitter(chunk_size=256, chunk_overlap=40)
+#     docs = text_splitter.split_documents(langchain_loader.load())
+#     print("***********  Saving Embedding into Vector Database *************")
+#     vec_database=FAISS.from_documents(docs,load_embedding_model())
+#     vec_database.save_local("input_data_vdb")
+#     print("*************  Vector Database Created *************")
+
+# load_saved_db=FAISS.load_local("./input_data_vdb/",load_embedding_model(),allow_dangerous_deserialization=True)
+
 def save_in_vectordb(file_path):
-    langchain_loader=TextLoader(file_path)
+    # Clear existing data in the input_data_vdb folder
+    vdb_folder = "input_data_vdb"
+    if os.path.exists(vdb_folder):
+        shutil.rmtree(vdb_folder)  # Delete the folder and its contents
+        print(f"***********  Cleared existing data in {vdb_folder} *************")
+
+    # Load the text data
+    langchain_loader = TextLoader(file_path)
     print("***********  Converting Text into Embedding *************")
+    
+    # Split the text into chunks
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=256, chunk_overlap=40)
     docs = text_splitter.split_documents(langchain_loader.load())
+    
+    # Create a new vector database with the embeddings
     print("***********  Saving Embedding into Vector Database *************")
-    vec_database=FAISS.from_documents(docs,load_embedding_model())
-    vec_database.save_local("input_data_vdb")
+    vec_database = FAISS.from_documents(docs, load_embedding_model())
+    
+    # Save the vector database locally
+    vec_database.save_local(vdb_folder)
     print("*************  Vector Database Created *************")
 
-load_saved_db=FAISS.load_local("./input_data_vdb/",load_embedding_model(),allow_dangerous_deserialization=True)
 
-def retrive_data_from_vdb(input_quetion):
+
+def retrive_data_from_vdb(load_saved_db,input_quetion):
     text_retriver=load_saved_db.as_retriever(search_kwargs={"k":5})
     context=text_retriver.get_relevant_documents(input_quetion)
     return context
