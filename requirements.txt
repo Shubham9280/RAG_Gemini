@@ -1,0 +1,9 @@
+fastapi==0.95.1
+requests==2.28.2
+Flask==2.3.2
+jsonify
+sentence_transformers
+pypdf
+langchain_community
+langchain
+faiss-cpu
