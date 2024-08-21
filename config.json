@@ -1,5 +1,5 @@
 {
-    "gemini_pro_key": "AIzaSyBfjYm2ogdJtAWTA68zUNucRjqzMrTrOkM",
+    "gemini_pro_key": "",
     "MODEL_CONFIG": {
       "temperature": 0.2,
       "top_p": 1,
