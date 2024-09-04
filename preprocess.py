@@ -73,7 +73,7 @@ def save_in_vectordb(file_path):
         print(f"***********  Cleared existing data in {vdb_folder} *************")
 
     # Load the text data
-    langchain_loader = TextLoader(file_path)
+    langchain_loader = TextLoader(file_path,encoding="utf-8")
     print("***********  Converting Text into Embedding *************")
     
     # Split the text into chunks

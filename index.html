@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,8 +59,8 @@
                 <input type="text" id="username" name="username" required>
             </div>
             <div class="form-group">
-                <label for="file">Upload PDF file:</label>
-                <input type="file" id="file" name="file" accept=".pdf" required>
+                <label for="file">Upload PDF files:</label>
+                <input type="file" id="file" name="files" accept=".pdf" multiple required>
             </div>
             <div class="form-group">
                 <button type="submit">Upload and Process</button>
@@ -112,7 +111,11 @@
             });
 
             const result = await response.json();
-            chatOutput.innerText = `Bot: ${result.response}`;
+            chatOutput.innerHTML = '<h4>Chat History:</h4>';
+            result.history.forEach(chat => {
+                chatOutput.innerHTML += `<p><strong>You:</strong> ${chat.user}</p><p><strong>Bot:</strong> ${chat.bot}</p>`;
+            });
+            chatOutput.innerHTML += `<p><strong>Bot:</strong> ${result.response}</p>`;
         });
     </script>
 </body>

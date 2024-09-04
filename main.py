@@ -24,33 +24,40 @@ model = genai.GenerativeModel(model_name="gemini-1.5-flash",
                               safety_settings=safety_settings)
 
 @app.post("/upload_pdf/")
-async def upload_pdf(username: str = Form(...), file: UploadFile = File(...)):
-    # Read the uploaded PDF
-    reader = PyPDF2.PdfReader(file.file)
-    text = ""
-    for page in range(len(reader.pages)):
-        text += reader.pages[page].extract_text()
+async def upload_pdf(username: str = Form(...), files: list[UploadFile] = File(...)):
+    all_text = ""
+    
+    for file in files:
+        # Read the uploaded PDF
+        reader = PyPDF2.PdfReader(file.file)
+        text = ""
+        for page in range(len(reader.pages)):
+            text += reader.pages[page].extract_text()
+        
+        all_text += text
 
     # Preprocess the text
-    total_number_of_paragraph, avg_single_paragraph_length, list_of_paragraph = pre_process.count_paragraphs(text)
+    total_number_of_paragraph, avg_single_paragraph_length, list_of_paragraph = pre_process.count_paragraphs(all_text)
     list_of_paragraph = [pre_process.remove_url_from_str(s_string) for s_string in list_of_paragraph]
 
     # Save the text in a file
-    pre_process.write_in_text_file(list_of_paragraph,filename="./pdf_test.txt")
+    pre_process.write_in_text_file(list_of_paragraph, filename="./pdf_test.txt")
 
     # Save in vector database
     pre_process.save_in_vectordb("./pdf_test.txt")
-    
-    
 
     return JSONResponse(content={"message": "Text preprocessing done!"})
 
+
+chat_history = []
+
 @app.post("/chat/")
 async def chat(user_input: str = Form(...)):
-    load_saved_db=FAISS.load_local("./input_data_vdb/",pre_process.load_embedding_model(),allow_dangerous_deserialization=True)
+    load_saved_db = FAISS.load_local("./input_data_vdb/", pre_process.load_embedding_model(), allow_dangerous_deserialization=True)
+    
     # Retrieve relevant data from the vector database
     r_text = ""
-    for s_match in pre_process.retrive_data_from_vdb(load_saved_db,user_input):
+    for s_match in pre_process.retrive_data_from_vdb(load_saved_db, user_input):
         r_text += " " + s_match.page_content
 
     # Prepare the input prompt for the generative model
@@ -65,10 +72,14 @@ async def chat(user_input: str = Form(...)):
 
     # Generate response using the model
     llm_response = model.generate_content(input_prompt)
+    response_text = llm_response.text
 
-    return JSONResponse(content={"response": llm_response.text})
+    # Save chat history
+    chat_history.append({"user": user_input, "bot": response_text})
+
+    return JSONResponse(content={"response": response_text, "history": chat_history})
+
 
 @app.get("/")
 async def read_root():
     return HTMLResponse(content=open("index.html").read())
-
